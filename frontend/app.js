@@ -5,45 +5,50 @@ let nodesDataSet = null;
 let edgesDataSet = null;
 let currentGraphData = null;
 
-// Sound synthesizer via Web Audio API
-const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+// Safe Sound synthesizer via Web Audio API (lazy initialized on user interaction)
+let audioCtx = null;
 function playBeep(freq = 440, type = 'sine', duration = 0.08) {
   try {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
     osc.type = type;
     osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+    gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
     osc.connect(gain);
     gain.connect(audioCtx.destination);
     osc.start();
     osc.stop(audioCtx.currentTime + duration);
   } catch (e) {
-    // Audio might be blocked before first user click
+    // Non-blocking fallback
   }
 }
 
 // Styling per node label
 function getNodeStyle(node) {
-  const label = node.label;
-  const status = node.status;
+  const label = node.label || 'Node';
+  const status = node.status || 'Normal';
   const props = node.properties || {};
 
   let background = '#1f2937';
   let border = '#374151';
-  let shape = 'dot';
-  let size = 18;
+  let size = 20;
 
   if (label === 'Pod') {
     if (status === 'COMPROMISED') {
       background = '#ff3366';
       border = '#ff0044';
-      size = 24;
+      size = 26;
     } else if (status === 'QUARANTINED') {
       background = '#ffb700';
       border = '#ffd000';
-      size = 22;
+      size = 24;
     } else {
       background = '#10b981';
       border = '#059669';
@@ -51,48 +56,48 @@ function getNodeStyle(node) {
   } else if (label === 'Service') {
     background = '#00f0ff';
     border = '#00b4d8';
-    size = 20;
+    size = 22;
   } else if (label === 'IAMRole') {
     background = '#f59e0b';
     border = '#d97706';
-    size = 22;
+    size = 24;
   } else if (label === 'S3Bucket') {
     background = '#b388ff';
     border = '#7c3aed';
-    size = 20;
+    size = 22;
   } else if (label === 'Secret') {
     background = '#ec4899';
     border = '#db2777';
-    size = 18;
+    size = 20;
   } else if (label === 'Database') {
     if (props.classification === 'CROWN_JEWEL') {
       background = '#ff0055';
       border = '#ffffff';
-      size = 28;
+      size = 30;
     } else {
       background = '#3b82f6';
       border = '#2563eb';
-      size = 20;
+      size = 22;
     }
   } else if (label === 'Vulnerability') {
     background = '#ef4444';
     border = '#b91c1c';
-    size = 16;
+    size = 18;
   } else if (label === 'Gateway' || label === 'Network') {
     background = '#6366f1';
     border = '#4f46e5';
-    size = 20;
+    size = 22;
   }
 
   return {
-    id: node.id,
-    label: node.name || node.id,
+    id: String(node.id),
+    label: String(node.name || node.id),
     color: {
       background: background,
       border: border,
       highlight: { background: '#ffffff', border: '#00f0ff' }
     },
-    shape: shape,
+    shape: 'dot',
     size: size,
     font: {
       color: '#e6edf3',
@@ -110,16 +115,24 @@ function getNodeStyle(node) {
 function initNetwork(graphData) {
   currentGraphData = graphData;
   const container = document.getElementById('graph-canvas');
+  if (!container) return;
+
+  if (network) {
+    try {
+      network.destroy();
+    } catch(e) {}
+    network = null;
+  }
 
   const visNodes = graphData.nodes.map(getNodeStyle);
   const visEdges = graphData.edges.map(e => ({
     id: e.id,
-    from: e.source,
-    to: e.target,
+    from: String(e.source),
+    to: String(e.target),
     label: e.type,
     arrows: 'to',
-    color: { color: 'rgba(75, 85, 99, 0.6)', highlight: '#00f0ff' },
-    font: { color: '#6b7280', size: 9, face: 'JetBrains Mono', align: 'middle' },
+    color: { color: 'rgba(75, 85, 99, 0.7)', highlight: '#00f0ff' },
+    font: { color: '#8b949e', size: 9, face: 'JetBrains Mono', align: 'middle' },
     smooth: { type: 'continuous' }
   }));
 
@@ -130,16 +143,19 @@ function initNetwork(graphData) {
     physics: {
       solver: 'forceAtlas2Based',
       forceAtlas2Based: {
-        gravitationalConstant: -40,
-        centralGravity: 0.008,
-        springLength: 95,
-        springConstant: 0.16
+        gravitationalConstant: -45,
+        centralGravity: 0.01,
+        springLength: 100,
+        springConstant: 0.18,
+        damping: 0.4
       },
-      stabilization: { iterations: 120 }
+      stabilization: { iterations: 100 }
     },
     interaction: {
       hover: true,
-      tooltipDelay: 100
+      tooltipDelay: 100,
+      zoomView: true,
+      dragView: true
     }
   };
 
@@ -147,9 +163,9 @@ function initNetwork(graphData) {
 
   // Click on node -> Update inspector
   network.on('click', params => {
-    if (params.nodes.length > 0) {
-      const selectedId = params.nodes[0];
-      const found = currentGraphData.nodes.find(n => n.id === selectedId);
+    if (params.nodes && params.nodes.length > 0) {
+      const selectedId = String(params.nodes[0]);
+      const found = currentGraphData.nodes.find(n => String(n.id) === selectedId);
       if (found) {
         showNodeInspector(found);
         playBeep(600, 'sine', 0.05);
@@ -157,14 +173,21 @@ function initNetwork(graphData) {
     }
   });
 
-  // Update counts
-  document.getElementById('graph-counts').innerText = `${graphData.nodes.length} / ${graphData.edges.length}`;
+  // Update counts in header
+  const countsEl = document.getElementById('graph-counts');
+  if (countsEl) {
+    countsEl.innerText = `${graphData.nodes.length} / ${graphData.edges.length}`;
+  }
 }
 
 // Show Node Inspector
 function showNodeInspector(node) {
-  document.getElementById('insp-type').innerText = node.label;
+  const typeEl = document.getElementById('insp-type');
+  if (typeEl) typeEl.innerText = node.label || 'Node';
+
   const content = document.getElementById('insp-content');
+  if (!content) return;
+
   const props = node.properties || {};
 
   let html = `
@@ -186,10 +209,15 @@ function showNodeInspector(node) {
 async function loadGraph() {
   try {
     const res = await fetch('/api/graph');
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     initNetwork(data);
   } catch (err) {
     console.error('Failed to load graph:', err);
+    const canvas = document.getElementById('graph-canvas');
+    if (canvas) {
+      canvas.innerHTML = `<div style="padding: 40px; color: #ff3366; font-family: monospace;">⚠️ Failed to load graph: ${err.message}. Ensure FalkorDB container is running on port 6379.</div>`;
+    }
   }
 }
 
@@ -199,10 +227,12 @@ async function runInvestigation() {
   const statusTag = document.getElementById('agent-status');
   const feed = document.getElementById('agent-feed');
 
-  btn.disabled = true;
-  statusTag.innerText = 'EXECUTING AGENT LOOP...';
-  statusTag.style.color = '#ff3366';
-  feed.innerHTML = '';
+  if (btn) btn.disabled = true;
+  if (statusTag) {
+    statusTag.innerText = 'EXECUTING AGENT LOOP...';
+    statusTag.style.color = '#ff3366';
+  }
+  if (feed) feed.innerHTML = '';
   playBeep(520, 'square', 0.1);
 
   try {
@@ -211,73 +241,91 @@ async function runInvestigation() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ pod_id: 'pod-ingress-7b4d' })
     });
+    if (!res.ok) throw new Error(`API error HTTP ${res.status}`);
     const result = await res.json();
 
     // Progressively stream trace steps with realistic delays
-    for (let i = 0; i < result.trace.length; i++) {
-      const step = result.trace[i];
-      await new Promise(r => setTimeout(r, 650)); // Cinematic delay for judges
+    if (result.trace && result.trace.length > 0) {
+      for (let i = 0; i < result.trace.length; i++) {
+        const step = result.trace[i];
+        await new Promise(r => setTimeout(r, 600)); // Cinematic delay
 
-      playBeep(440 + i * 80, 'sine', 0.08);
+        playBeep(440 + i * 80, 'sine', 0.08);
 
-      const stepEl = document.createElement('div');
-      stepEl.className = `timeline-step ${step.action === 'AUTONOMOUS_CONTAINMENT' ? 'step-remediate' : (step.action === 'ALERT_INGESTION' ? 'step-alert' : '')}`;
-      stepEl.innerHTML = `
-        <div class="step-header">
-          <span class="step-num">STEP 0${step.step} // ${step.action}</span>
-        </div>
-        <div class="step-title">${step.title}</div>
-        <div class="step-detail">${step.detail}</div>
-        ${step.cypher_used ? `<div class="step-cypher">CYPHER: ${step.cypher_used}</div>` : ''}
-      `;
-      feed.appendChild(stepEl);
-      feed.scrollTop = feed.scrollHeight;
+        if (feed) {
+          const stepEl = document.createElement('div');
+          stepEl.className = `timeline-step ${step.action === 'AUTONOMOUS_CONTAINMENT' ? 'step-remediate' : (step.action === 'ALERT_INGESTION' ? 'step-alert' : '')}`;
+          stepEl.innerHTML = `
+            <div class="step-header">
+              <span class="step-num">STEP 0${step.step} // ${step.action}</span>
+            </div>
+            <div class="step-title">${step.title}</div>
+            <div class="step-detail">${step.detail}</div>
+            ${step.cypher_used ? `<div class="step-cypher">CYPHER: ${step.cypher_used}</div>` : ''}
+          `;
+          feed.appendChild(stepEl);
+          feed.scrollTop = feed.scrollHeight;
+        }
 
-      // Highlight nodes in the graph canvas
-      if (step.highlight_nodes && step.highlight_nodes.length > 0) {
-        step.highlight_nodes.forEach(nId => {
-          if (nodesDataSet.get(nId)) {
-            nodesDataSet.update({
-              id: nId,
-              borderWidth: 4,
-              color: { border: '#ff3366', background: '#ff0055' }
-            });
-          }
-        });
+        // Highlight nodes in the graph canvas
+        if (step.highlight_nodes && step.highlight_nodes.length > 0 && nodesDataSet) {
+          step.highlight_nodes.forEach(nId => {
+            const idStr = String(nId);
+            if (nodesDataSet.get(idStr)) {
+              nodesDataSet.update({
+                id: idStr,
+                borderWidth: 4,
+                color: { border: '#ff3366', background: '#ff0055' }
+              });
+            }
+          });
+        }
       }
     }
 
     // After containment: Update UI state to SAFE
     setTimeout(() => {
-      // Threat indicator
       const ind = document.getElementById('threat-indicator');
-      ind.className = 'cyber-badge pulse-green';
-      document.getElementById('threat-badge-text').innerText = 'THREAT NEUTRALIZED';
+      if (ind) ind.className = 'cyber-badge pulse-green';
 
-      document.getElementById('blast-score').innerText = '0.0 (SECURE)';
-      document.getElementById('blast-score').className = 'stat-val cyber-green';
+      const threatText = document.getElementById('threat-badge-text');
+      if (threatText) threatText.innerText = 'THREAT NEUTRALIZED';
+
+      const blastScore = document.getElementById('blast-score');
+      if (blastScore) {
+        blastScore.innerText = '0.0 (SECURE)';
+        blastScore.className = 'stat-val cyber-green';
+      }
 
       const banner = document.getElementById('overlay-banner');
-      banner.className = 'canvas-overlay-banner neutralized';
-      document.getElementById('banner-text').innerText = '✅ Kill-Chain Severed: Toxic IAM attachment revoked. Zero paths to Crown Jewel DB.';
+      if (banner) banner.className = 'canvas-overlay-banner neutralized';
 
-      statusTag.innerText = 'CONTAINMENT VERIFIED';
-      statusTag.style.color = '#00ff9d';
+      const bannerText = document.getElementById('banner-text');
+      if (bannerText) bannerText.innerText = '✅ Kill-Chain Severed: Toxic IAM attachment revoked. Zero paths to Crown Jewel DB.';
 
-      // Update graph in canvas
-      initNetwork(result.graph);
+      if (statusTag) {
+        statusTag.innerText = 'CONTAINMENT VERIFIED';
+        statusTag.style.color = '#00ff9d';
+      }
+
+      // Re-render graph canvas with updated severed topology
+      if (result.graph) {
+        initNetwork(result.graph);
+      }
 
       // Play success chord
       playBeep(659, 'sine', 0.15);
       setTimeout(() => playBeep(880, 'sine', 0.25), 160);
 
-      btn.disabled = false;
+      if (btn) btn.disabled = false;
     }, 800);
 
   } catch (err) {
     console.error('Investigation failed:', err);
-    btn.disabled = false;
-    statusTag.innerText = 'ERROR';
+    if (btn) btn.disabled = false;
+    if (statusTag) {
+      statusTag.innerText = 'ERROR: ' + err.message;
+    }
   }
 }
 
@@ -286,46 +334,64 @@ async function resetGraph() {
   try {
     playBeep(350, 'sawtooth', 0.1);
     const res = await fetch('/api/reset-graph', { method: 'POST' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
 
-    // Reset badges
     const ind = document.getElementById('threat-indicator');
-    ind.className = 'cyber-badge pulse-red';
-    document.getElementById('threat-badge-text').innerText = 'BREACH DETECTED';
+    if (ind) ind.className = 'cyber-badge pulse-red';
 
-    document.getElementById('blast-score').innerText = '9.8 (CRITICAL)';
-    document.getElementById('blast-score').className = 'stat-val cyber-red';
+    const threatText = document.getElementById('threat-badge-text');
+    if (threatText) threatText.innerText = 'BREACH DETECTED';
+
+    const blastScore = document.getElementById('blast-score');
+    if (blastScore) {
+      blastScore.innerText = '9.8 (CRITICAL)';
+      blastScore.className = 'stat-val cyber-red';
+    }
 
     const banner = document.getElementById('overlay-banner');
-    banner.className = 'canvas-overlay-banner';
-    document.getElementById('banner-text').innerText = 'Active Kill-Chain: pod-ingress-7b4d reaches Crown Jewel DB via 4 hops';
+    if (banner) banner.className = 'canvas-overlay-banner';
 
-    document.getElementById('agent-status').innerText = 'READY';
-    document.getElementById('agent-status').style.color = '#00f0ff';
+    const bannerText = document.getElementById('banner-text');
+    if (bannerText) bannerText.innerText = 'Active Kill-Chain: pod-ingress-7b4d reaches Crown Jewel DB via 4 hops';
+
+    const statusTag = document.getElementById('agent-status');
+    if (statusTag) {
+      statusTag.innerText = 'READY';
+      statusTag.style.color = '#00f0ff';
+    }
 
     const feed = document.getElementById('agent-feed');
-    feed.innerHTML = `
-      <div class="feed-welcome-card">
-        <h4>Awaiting Incident Command Trigger</h4>
-        <p>Click <strong>"Autonomous Investigate & Remediate"</strong> to watch the agent:</p>
-        <ul>
-          <li>Traverse FalkorDB multi-hop connections</li>
-          <li>Expose toxic IAM combinations</li>
-          <li>Calculate sensitive asset blast radius</li>
-          <li>Autonomously sever malicious graph edges</li>
-        </ul>
-      </div>
-    `;
+    if (feed) {
+      feed.innerHTML = `
+        <div class="feed-welcome-card">
+          <h4>Awaiting Incident Command Trigger</h4>
+          <p>Click <strong>"Autonomous Investigate & Remediate"</strong> to watch the agent:</p>
+          <ul>
+            <li>Traverse FalkorDB multi-hop connections</li>
+            <li>Expose toxic IAM combinations</li>
+            <li>Calculate sensitive asset blast radius</li>
+            <li>Autonomously sever malicious graph edges</li>
+          </ul>
+        </div>
+      `;
+    }
 
-    initNetwork(data.graph);
+    if (data.graph) {
+      initNetwork(data.graph);
+    }
   } catch (err) {
     console.error('Reset failed:', err);
   }
 }
 
 // Attach event listeners
-document.getElementById('btn-investigate').addEventListener('click', runInvestigation);
-document.getElementById('btn-reset').addEventListener('click', resetGraph);
+document.addEventListener('DOMContentLoaded', () => {
+  const btnInv = document.getElementById('btn-investigate');
+  if (btnInv) btnInv.addEventListener('click', runInvestigation);
 
-// Load on start
-window.addEventListener('DOMContentLoaded', loadGraph);
+  const btnReset = document.getElementById('btn-reset');
+  if (btnReset) btnReset.addEventListener('click', resetGraph);
+
+  loadGraph();
+});
