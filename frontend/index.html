@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AegisGraph // Autonomous Incident Commander & Blast Radius Agent</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;800&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="hud-container">
+    <!-- Top Navigation Bar -->
+    <header class="hud-header">
+      <div class="logo-group">
+        <div class="cyber-badge pulse-red" id="threat-indicator">
+          <span class="blip"></span>
+          <span id="threat-badge-text">BREACH DETECTED</span>
+        </div>
+        <div class="brand">
+          <h1>AEGIS<span>//GRAPH</span></h1>
+          <p class="tagline">FalkorDB-Powered Autonomous Cloud Incident Commander</p>
+        </div>
+      </div>
+
+      <div class="stats-ribbon">
+        <div class="stat-card">
+          <span class="stat-label">CONTEXT LAYER</span>
+          <span class="stat-val cyber-cyan"><span class="status-dot"></span>FalkorDB</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">NODES / EDGES</span>
+          <span class="stat-val" id="graph-counts">20 / 17</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">BLAST RADIUS</span>
+          <span class="stat-val cyber-red" id="blast-score">9.8 (CRITICAL)</span>
+        </div>
+      </div>
+
+      <div class="controls-group">
+        <button id="btn-investigate" class="cyber-btn primary-glow">
+          <span class="btn-icon">⚡</span>
+          <span>AUTONOMOUS INVESTIGATE & REMEDIATE</span>
+        </button>
+        <button id="btn-reset" class="cyber-btn secondary">
+          <span class="btn-icon">🔄</span>
+          <span>RESET TOPOLOGY</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Workspace Grid -->
+    <main class="hud-body">
+      <!-- Left: Interactive Graph Canvas -->
+      <section class="graph-section">
+        <div class="section-header">
+          <div class="section-title">
+            <span class="icon">🕸️</span> LIVE CLOUD TOPOLOGY & ATTACK SURFACE
+          </div>
+          <div class="legend">
+            <span class="legend-item"><span class="dot dot-pod"></span> Pod</span>
+            <span class="legend-item"><span class="dot dot-svc"></span> Service</span>
+            <span class="legend-item"><span class="dot dot-role"></span> IAM Role</span>
+            <span class="legend-item"><span class="dot dot-s3"></span> Storage</span>
+            <span class="legend-item"><span class="dot dot-db"></span> Crown Jewel DB</span>
+          </div>
+        </div>
+
+        <div id="graph-canvas" class="canvas-container"></div>
+
+        <div class="canvas-overlay-banner" id="overlay-banner">
+          <span class="alert-icon">⚠️</span>
+          <span id="banner-text">Active Kill-Chain: pod-ingress-7b4d reaches Crown Jewel DB via 4 hops</span>
+        </div>
+      </section>
+
+      <!-- Right: Autonomous Agent Reasoning Feed -->
+      <aside class="agent-feed-section">
+        <div class="section-header">
+          <div class="section-title">
+            <span class="icon">🤖</span> AGENT THOUGHT TRACE & DECISION LOG
+          </div>
+          <span class="agent-status-tag" id="agent-status">READY</span>
+        </div>
+
+        <div class="feed-scroll" id="agent-feed">
+          <div class="feed-welcome-card">
+            <h4>Awaiting Incident Command Trigger</h4>
+            <p>Click <strong>"Autonomous Investigate & Remediate"</strong> to watch the agent:</p>
+            <ul>
+              <li>Traverse FalkorDB multi-hop connections</li>
+              <li>Expose toxic IAM combinations</li>
+              <li>Calculate sensitive asset blast radius</li>
+              <li>Autonomously sever malicious graph edges</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Node Inspector Drawer -->
+        <div class="node-inspector" id="node-inspector">
+          <div class="inspector-header">
+            <span class="inspector-title">SELECTED NODE INSPECTOR</span>
+            <span class="inspector-badge" id="insp-type">None</span>
+          </div>
+          <div class="inspector-content" id="insp-content">
+            <p class="placeholder-text">Click any node in the topology graph to inspect its properties and relationships.</p>
+          </div>
+        </div>
+      </aside>
+    </main>
+
+    <!-- Footer Status -->
+    <footer class="hud-footer">
+      <span>Track 01: Agents That Act on Connected Data | Team SUVI (Baji Baddela)</span>
+      <span>Engine: FalkorDB Low-Latency Graph Database (Cypher Native)</span>
+    </footer>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
