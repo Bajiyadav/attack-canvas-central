@@ -100,11 +100,107 @@ When an alert fires, our **Autonomous SecOps Agent**:
 
 ---
 
-## 5. Implementation Roadmap (Zero to Hero)
+---
 
-- [x] **Phase 0: Environment Ready** (Docker, FalkorDB pulled & verified, Python, Node.js).
-- [ ] **Phase 1: FalkorDB Graph Seeder** (Realistic cloud infrastructure topology with deliberate attack paths).
-- [ ] **Phase 2: Agent Tools & Reasoner** (Cypher queries, blast-radius calculator, path finder, containment executor).
-- [ ] **Phase 3: Fast Backend API** (FastAPI backend connecting the LLM agent + FalkorDB + streaming event logs).
-- [ ] **Phase 4: Stunning Cyber Commander UI** (Interactive graph canvas with glowing nodes, live containment triggers).
-- [ ] **Phase 5: Hackathon Demo & Submission Pack** (2-min demo video script, README, and winning blog post for the AirPods 5 prize).
+## 5. Official Rules & Hackathon Window (October 15 – October 18, 2026)
+
+- **Official Start:** October 15, 2026 at 12:01 AM IST
+- **Official Close:** October 18, 2026 at 11:59 PM IST
+- **Pre-event Policy:** Preparation is strictly limited to planning notes, architecture diagrams, data models, and specifications. Main coding, feature implementation, and UI design work must happen during the official event.
+- **Core Technology Mandate:** FalkorDB must be central to the application.
+- **Required Deliverables:** Public repository, graph data model, relevant Cypher queries, demo video, and local/deployment setup instructions.
+
+---
+
+## 6. AegisGraph Implementation Blueprint (Track 1 Target)
+
+### Technology Stack:
+* **LLM Engine:** Google Gemini API (`google-genai` SDK) with strict Function Calling.
+* **Context Layer:** FalkorDB on Docker (port 6379) as the primary graph store for topology, attack paths, and remediation evidence.
+* **Agent Core & API:** FastAPI + Python for agent orchestration, tool execution, safety boundaries, and REST API.
+* **Cyber HUD:** HTML, CSS, JavaScript, vis-network for physics-based graph rendering, audio telemetry, and live timeline.
+
+### Planned Tool Registry:
+
+| Tool | Responsibility |
+| :--- | :--- |
+| `get_asset` | Inspect an asset and its security properties |
+| `find_attack_paths` | Discover paths from a selected asset to sensitive targets |
+| `calculate_blast_radius` | Identify reachable resources and quantify exposure |
+| `inspect_permissions` | Examine IAM roles and access relationships |
+| `propose_containment` | Recommend a narrowly scoped remediation |
+| `execute_containment` | Execute a policy-approved graph mutation (sever edge, quarantine) |
+| `verify_containment` | Re-query the graph and validate the outcome (alternate path check) |
+
+> **Safety Boundary:** `execute_containment` is strictly restricted to validated, parameterized operations. Arbitrary raw Cypher execution will never be exposed as an unconstrained destructive tool.
+
+### Planned API Contract:
+
+| Endpoint | Purpose |
+| :--- | :--- |
+| `GET /api/graph` | Retrieve full graph topology (nodes and relationships) |
+| `POST /api/investigate` | Start an investigation for a selected asset |
+| `POST /api/contain` | Submit a containment proposal for validation and execution |
+| `GET /api/investigations/{id}` | Retrieve investigation progress and evidence logs |
+| `POST /api/chat` | Ask graph-grounded SecOps questions in natural language |
+| `POST /api/reset` | Reset the synthetic demonstration environment to breach state |
+
+---
+
+## 7. Four-Day Delivery Plan (October 15 – October 18, 2026)
+
+### Day 1 — Agent & Graph Foundation (Oct 15)
+- Establish a clean, reproducible baseline environment.
+- Validate FalkorDB connectivity and parameterized Cypher queries.
+- Implement Gemini tool-calling loop using `google-genai` with bounded iteration limits.
+- Add dynamic starting-asset selection (breach any node).
+- Implement deterministic fallback mode when API keys are absent.
+
+### Day 2 — Containment & Interface (Oct 16)
+- Add containment proposals and policy safety checks.
+- Implement post-remediation verification ensuring alternate paths are caught.
+- Connect real agent trace events to the Cyber HUD.
+- Add node selection, interactive progress indicators, and evidence panels.
+
+### Day 3 — Testing & Differentiation (Oct 17)
+- Test diverse starting assets and multi-hop attack routes.
+- Test edge cases: unreachable targets, dead ends, and parallel routes.
+- Test resilience: API timeouts, connection drops, and repeated requests.
+- Add natural-language graph query interface (`/api/chat`).
+- Capture reproducible before-and-after evidence snapshots.
+
+### Day 4 — Submission & Demo (Oct 18)
+- Finalize architecture, graph schema, and Cypher query documentation.
+- Document the Cypher queries and tool-calling flow in `README.md`.
+- Verify clean-room installation instructions on a fresh setup.
+- Record crisp 2-3 minute demo video showcasing complete incident lifecycle.
+- Finalize `BLOG_POST.md` for the AirPods 5 prize and submit before 11:59 PM IST.
+
+---
+
+## 8. Acceptance Test Matrix
+
+| Test | Required Result |
+| :--- | :--- |
+| **Dynamic Starting Asset** | Investigation uses the selected asset, not a hardcoded ID |
+| **Multi-Hop Discovery** | Returns actual graph-backed paths and their relationships |
+| **Agent Autonomy** | Tool selection dynamically varies based on evidence returned |
+| **Containment Boundary** | Only validated, permitted actions execute |
+| **Alternate Path Verification** | Deleting one edge must not report success if another route exists |
+| **LLM Fallback** | Deterministic mode runs smoothly if Gemini API is unreachable |
+| **Repeatability** | Resetting restores the exact synthetic scenario reliably |
+| **Explainability** | Tool inputs, results, decisions, and actions are fully inspectable |
+| **Graph Dependency** | Removing FalkorDB breaks the agent, proving graph necessity |
+
+---
+
+## 9. Final Submission Package Checklist
+
+- [ ] Public source repository with 1-click Docker setup.
+- [ ] Graph schema diagram and architecture specifications.
+- [ ] Cypher queries documentation and tool-calling trace examples.
+- [ ] Automated test suite (`pytest`) for attack paths and remediation.
+- [ ] 2-3 minute crisp demo video with voiceover walkthrough.
+- [ ] Technical blog post (`BLOG_POST.md`) submitted for AirPods 5 prize.
+- [ ] AI-assistance disclosure and clear summary of team technical contributions.
+
