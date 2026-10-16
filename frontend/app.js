@@ -138,6 +138,7 @@ window.selectNode = function(id) {
   renderAssetList();
   renderInspector();
   renderRibbon();
+  if (typeof switchTab === 'function') switchTab('inspector');
 
   const hintEl = document.getElementById("terminal-context-asset");
   if (hintEl) hintEl.innerText = id;
@@ -859,14 +860,41 @@ document.addEventListener("DOMContentLoaded", () => {
   // Toggle Assistant
   const btnToggle = document.getElementById("btn-toggle-assistant");
   const btnMobileChat = document.getElementById("btn-mobile-chat");
+  const btnCloseTerm = document.getElementById("btn-close-terminal");
   const terminal = document.getElementById("assistant-terminal");
 
-  const toggleChat = () => {
-    state.isAssistantOpen = !state.isAssistantOpen;
-    if (terminal) terminal.classList.toggle("assistant-expanded", state.isAssistantOpen);
+  window.toggleAssistant = function(forceState) {
+    if (!terminal) return;
+    state.isAssistantOpen = forceState !== undefined ? forceState : !state.isAssistantOpen;
+    terminal.classList.toggle("assistant-expanded", state.isAssistantOpen);
   };
-  if (btnToggle) btnToggle.addEventListener("click", toggleChat);
-  if (btnMobileChat) btnMobileChat.addEventListener("click", toggleChat);
+
+  window.sendPrompt = function(text) {
+    const input = document.getElementById("chat-input");
+    if (!input) return;
+    input.value = text;
+    window.toggleAssistant(true);
+    const form = document.getElementById("chat-form");
+    if (form) {
+      form.dispatchEvent(new Event("submit", { cancelable: true }));
+    }
+  };
+
+  if (btnToggle) btnToggle.addEventListener("click", () => window.toggleAssistant());
+  if (btnMobileChat) btnMobileChat.addEventListener("click", () => window.toggleAssistant());
+  if (btnCloseTerm) btnCloseTerm.addEventListener("click", () => window.toggleAssistant(false));
+
+  // Global Keyboard Shortcuts
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "/" && document.activeElement.tagName !== "INPUT" && document.activeElement.tagName !== "TEXTAREA") {
+      e.preventDefault();
+      const filterInput = document.getElementById("asset-filter-input");
+      if (filterInput) filterInput.focus();
+    } else if (e.key === "Escape") {
+      if (typeof toggleSpeedModal === "function") toggleSpeedModal(false);
+      window.toggleAssistant(false);
+    }
+  });
 
   // Focus Ingress
   const btnFocus = document.getElementById("btn-focus-ingress");

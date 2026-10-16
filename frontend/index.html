@@ -389,7 +389,7 @@
                 </div>
 
                 <!-- DRAMATIC BROKEN PIPELINE VISUAL -->
-                <div class="pipeline-broken-visual" id="pipeline-broken-visual" style="display: none;">
+                <div class="pipeline-broken-visual" id="pipeline-broken-visual" style="display: none; cursor: pointer;" onclick="toggleSpeedModal(true)" title="Click to view speed comparison">
                   <div class="broken-laser-hazard">
                     <span class="hazard-wire wire-left"></span>
                     <div class="broken-laser-sign">
@@ -590,13 +590,21 @@
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
               AI SECOPS TERMINAL
             </span>
-            <span class="terminal-live"><i></i> READY</span>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span class="terminal-live"><i></i> READY</span>
+              <button type="button" class="terminal-close-btn" id="btn-close-terminal" title="Close AI Terminal">&times;</button>
+            </div>
           </div>
           <div class="chat-messages" id="chat-messages" aria-live="polite">
             <div class="chat-message chat-agent">
               <span>AGENT</span>
               <p>Incident copilot online. Ask about attack paths, affected assets, or containment.</p>
             </div>
+          </div>
+          <div class="chat-suggestions">
+            <button type="button" class="suggestion-chip" onclick="window.sendPrompt('What is the blast radius?')">🎯 Blast Radius</button>
+            <button type="button" class="suggestion-chip" onclick="window.sendPrompt('Which edge was severed?')">✂️ Severed Edge</button>
+            <button type="button" class="suggestion-chip" onclick="window.sendPrompt('Why is FalkorDB 240,000x faster?')">⚡ Speed Advantage</button>
           </div>
           <form class="chat-form" id="chat-form">
             <input type="text" id="chat-input" placeholder="Ask about this incident…" autocomplete="off" />
