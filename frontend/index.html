@@ -3,122 +3,625 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AegisGraph // Autonomous Incident Commander & Blast Radius Agent</title>
+  <title>AegisGraph | Incident Command Center</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;800&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
-  <script src="/static/vis-network.min.js"></script>
-  <link rel="stylesheet" href="/static/style.css?v=2">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css?v=pipeline-broken-v4">
 </head>
 <body>
-  <div class="hud-container">
-    <!-- Top Navigation Bar -->
-    <header class="hud-header">
-      <div class="logo-group">
-        <div class="cyber-badge pulse-red" id="threat-indicator">
-          <span class="blip"></span>
-          <span id="threat-badge-text">BREACH DETECTED</span>
-        </div>
-        <div class="brand">
-          <h1>AEGIS<span>//GRAPH</span></h1>
-          <p class="tagline">FalkorDB-Powered Autonomous Cloud Incident Commander</p>
-        </div>
+  <main class="command-shell">
+    <!-- Topbar -->
+    <header class="topbar">
+      <a class="brand-lockup" href="/" aria-label="AegisGraph home">
+        <span class="brand-mark">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/></svg>
+          <span class="radar-pulse"></span>
+        </span>
+        <span>
+          <strong>Aegis<span>Graph</span></strong>
+          <small>INCIDENT COMMAND</small>
+        </span>
+      </a>
+
+      <div class="system-status">
+        <span class="system-chip">
+          <span class="status-led led-green" id="engine-status-led"></span>
+          GRAPH ENGINE <b id="engine-status-text">FALKORDB · ONLINE</b>
+        </span>
+        <span class="system-chip reasoning">
+          <span class="status-led led-cyan"></span>
+          REASONING <b>GEMINI</b>
+        </span>
+        <span class="track-label">TRACK 01 <i>·</i> AGENTS THAT ACT ON CONNECTED DATA</span>
       </div>
 
-      <div class="stats-ribbon">
-        <div class="stat-card">
-          <span class="stat-label">CONTEXT LAYER</span>
-          <span class="stat-val cyber-cyan"><span class="status-dot"></span>FalkorDB</span>
-        </div>
-        <div class="stat-card">
-          <span class="stat-label">NODES / EDGES</span>
-          <span class="stat-val" id="graph-counts">20 / 17</span>
-        </div>
-        <div class="stat-card">
-          <span class="stat-label">BLAST RADIUS</span>
-          <span class="stat-val cyber-red" id="blast-score">9.8 (CRITICAL)</span>
-        </div>
+      <div class="breach-pill" id="breach-pill">
+        <span class="breach-dot"></span>
+        <span id="breach-pill-text">BREACH DETECTED · CVE-2026-9912</span>
+        <small id="breach-pill-sub">CVSS 9.8 · CRITICAL</small>
       </div>
 
-      <div class="controls-group">
-        <button id="btn-investigate" class="cyber-btn primary-glow">
-          <span class="btn-icon">⚡</span>
-          <span>AUTONOMOUS INVESTIGATE & REMEDIATE</span>
+      <div class="top-actions">
+        <button id="btn-investigate" class="action-primary">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          <span id="btn-investigate-text">AUTONOMOUS RESPONSE</span>
         </button>
-        <button id="btn-reset" class="cyber-btn secondary">
-          <span class="btn-icon">🔄</span>
-          <span>RESET TOPOLOGY</span>
+        <button id="btn-reset" class="action-reset" title="Reset topology">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+          <span>RESET</span>
+        </button>
+        <button id="btn-toggle-assistant" class="action-assistant" title="Toggle AI Copilot">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          <span>AI COPILOT</span>
         </button>
       </div>
     </header>
 
-    <!-- Main Workspace Grid -->
-    <main class="hud-body">
-      <!-- Left: Interactive Graph Canvas -->
-      <section class="graph-section">
-        <div class="section-header">
-          <div class="section-title">
-            <span class="icon">🕸️</span> LIVE CLOUD TOPOLOGY & ATTACK SURFACE
+    <!-- Incident Strip -->
+    <div class="incident-strip">
+      <div>
+        <span class="live-indicator"><span id="live-dot"></span> LIVE INCIDENT</span>
+        <span class="strip-divider"></span>
+        <span class="mono">INC-2026-1042</span>
+        <span class="strip-divider"></span>
+        <span>PRODUCTION / US-EAST-1</span>
+      </div>
+      <span class="incident-time">
+        <span class="status-led led-green"></span> TELEMETRY STREAMING <i>·</i> <span id="incident-timer">00:04:32</span>
+      </span>
+    </div>
+
+    <!-- Main Workspace (3 Columns) -->
+    <div class="workspace" id="main">
+      <!-- Left Rail -->
+      <aside class="left-rail">
+        <!-- Overview -->
+        <section class="rail-section overview-section">
+          <div class="section-eyebrow">
+            <span>INCIDENT OVERVIEW</span>
+            <span class="eyebrow-code">01 / 04</span>
           </div>
-          <div class="legend">
-            <span class="legend-item"><span class="dot dot-pod"></span> Pod</span>
-            <span class="legend-item"><span class="dot dot-svc"></span> Service</span>
-            <span class="legend-item"><span class="dot dot-role"></span> IAM Role</span>
-            <span class="legend-item"><span class="dot dot-s3"></span> Storage</span>
-            <span class="legend-item"><span class="dot dot-db"></span> Crown Jewel DB</span>
+          <div class="risk-heading">
+            <div>
+              <span class="metric-label">BLAST RADIUS</span>
+              <strong id="blast-assets-count">4<small> assets</small></strong>
+            </div>
+            <div class="risk-donut" id="risk-donut">
+              <span id="risk-score-num">9.8</span>
+              <small>RISK</small>
+            </div>
+          </div>
+          <div class="risk-meter">
+            <span id="risk-meter-bar" style="width: 94%;"></span>
+          </div>
+          <div class="metric-foot">
+            <span id="threat-state-text">CRITICAL EXPOSURE</span>
+            <span class="mono" id="cvss-score-text">CVSS 9.8</span>
+          </div>
+          <div class="pii-exposure">
+            <div class="pii-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+            </div>
+            <div>
+              <span>PII RECORDS AT RISK</span>
+              <strong id="pii-records-count">2,400,000</strong>
+            </div>
+            <span class="pii-unit">RECORDS</span>
+          </div>
+        </section>
+
+        <!-- Asset Inventory -->
+        <section class="rail-section asset-section">
+          <div class="section-eyebrow">
+            <span>ASSET INVENTORY</span>
+            <span class="count-tag" id="asset-inventory-count">08</span>
+          </div>
+          <label class="asset-search">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="asset-filter-input" placeholder="Filter assets…">
+            <kbd>/</kbd>
+          </label>
+          <div class="asset-list" id="asset-list-container">
+            <!-- Rendered dynamically -->
+          </div>
+        </section>
+
+        <!-- Breach Simulator -->
+        <section class="rail-section simulate-section">
+          <div class="section-eyebrow">
+            <span>BREACH SIMULATOR</span>
+            <span class="sim-ready">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
+              READY
+            </span>
+          </div>
+          <label class="select-wrap">
+            <select id="sim-target-select">
+              <option value="pod-ingress-7b4d">pod-ingress-7b4d</option>
+            </select>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </label>
+          <button class="simulate-button" id="btn-simulate-breach">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            SIMULATE BREACH
+          </button>
+        </section>
+
+        <div class="left-footer">
+          <span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            ZERO-TRUST ENFORCED
+          </span>
+          <span class="mono">AEGIS v2.6.1</span>
+        </div>
+      </aside>
+
+      <!-- Center: Attack Surface Topology -->
+      <section class="graph-panel" aria-label="Interactive attack graph">
+        <div class="graph-toolbar">
+          <div class="graph-title">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="16" y="16" width="6" height="6" rx="1"/><rect x="2" y="16" width="6" height="6" rx="1"/><rect x="9" y="2" width="6" height="6" rx="1"/><path d="M5 16v-3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3"/><path d="M12 12V8"/></svg>
+            <span>ATTACK SURFACE</span>
+            <span class="graph-subtitle">· FALKORDB KILL-CHAIN</span>
+          </div>
+
+          <!-- View Mode Toggle -->
+          <div class="view-mode-tabs">
+            <button class="view-tab-btn active" id="tab-view-split" onclick="switchGraphView('split')">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="12" x2="21" y2="12"/></svg>
+              <span>SPLIT HUD</span>
+            </button>
+            <button class="view-tab-btn" id="tab-view-pipeline" onclick="switchGraphView('pipeline')">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+              <span>PIPELINE DECK</span>
+            </button>
+            <button class="view-tab-btn" id="tab-view-topology" onclick="switchGraphView('topology')">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/></svg>
+              <span>TOPOLOGY MESH</span>
+            </button>
+          </div>
+
+          <div class="graph-tools">
+            <span class="node-count" id="topology-counts">8 NODES <i>/</i> 8 EDGES</span>
+            <button class="icon-action" id="btn-focus-ingress" title="Focus ingress pod">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="22" y1="12" x2="18" y2="12"/><line x1="6" y1="12" x2="2" y2="12"/><line x1="12" y1="6" x2="12" y2="2"/><line x1="12" y1="22" x2="12" y2="18"/></svg>
+            </button>
           </div>
         </div>
 
-        <div id="graph-canvas" class="canvas-container"></div>
+        <!-- PROMINENT KILL-CHAIN ATTACK PIPELINE HERO BANNER -->
+        <div class="pipeline-hero" id="pipeline-hero">
+          <!-- Header Bar -->
+          <div class="pipeline-header">
+            <div class="pipeline-title-group">
+              <span class="pipeline-badge" id="pipeline-badge-live">
+                <span class="status-led led-red" id="pipeline-live-led"></span>
+                <span id="pipeline-badge-text">LIVE ATTACK</span>
+              </span>
+              <h3 class="pipeline-title" id="pipeline-title">ATTACK PIPELINE (4 SIMPLE STEPS)</h3>
+              <span class="pipeline-traversal-tag" id="pipeline-engine-tag">FALKORDB GRAPH · 0.60ms</span>
+            </div>
 
-        <div class="canvas-overlay-banner" id="overlay-banner">
-          <span class="alert-icon">⚠️</span>
-          <span id="banner-text">Active Kill-Chain: pod-ingress-7b4d reaches Crown Jewel DB via 4 hops</span>
+            <!-- Instant Pipeline State Switcher (Broken vs Active vs Speed Benchmark) -->
+            <div class="pipeline-state-toggle" id="pipeline-state-toggle">
+              <button class="state-toggle-btn active btn-breach" id="btn-toggle-breach" onclick="setManualState('breach')" title="View Active Attack Pipeline">
+                <span class="state-dot dot-red"></span>
+                <span>🚨 ACTIVE ATTACK</span>
+              </button>
+              <button class="state-toggle-btn btn-broken" id="btn-toggle-broken" onclick="setManualState('broken')" title="View Broken & Severed Pipeline">
+                <span class="state-dot dot-severed"></span>
+                <span>✂️ PIPELINE BROKEN</span>
+              </button>
+              <button class="state-toggle-btn btn-speed" id="btn-toggle-speed" onclick="toggleSpeedModal()" title="Why Connected Data Is 240,000x Faster">
+                <span class="state-dot dot-cyan"></span>
+                <span>⚡ WHY IT'S FASTER</span>
+              </button>
+            </div>
+
+            <div class="pipeline-status-badge" id="pipeline-status-badge">
+              <span class="pipeline-dot pulse-red" id="pipeline-dot"></span>
+              <span id="pipeline-status-text">ATTACK IN PROGRESS · 4 STEPS TO DATABASE</span>
+            </div>
+          </div>
+
+          <!-- Interactive Speed Advantage Modal -->
+          <div class="speed-benchmark-banner" id="speed-benchmark-banner" style="display: none;">
+            <div class="speed-banner-header">
+              <div class="speed-banner-title">
+                <span class="speed-tag">HACKATHON TRACK 01: AGENTS THAT ACT ON CONNECTED DATA</span>
+                <h4>WHY THE GRAPH AGENT IS 240,000x FASTER</h4>
+              </div>
+              <button class="speed-close-btn" onclick="toggleSpeedModal()" title="Close">&times;</button>
+            </div>
+            <div class="speed-comparison-columns">
+              <div class="speed-col-card speed-card-graph">
+                <div class="col-head">
+                  <span class="col-badge badge-green">FALKORDB CONNECTED GRAPH</span>
+                  <div class="col-metric">63 ms</div>
+                  <small>AUTONOMOUS ZERO-TRUST CONTAINMENT</small>
+                </div>
+                <ul class="col-points">
+                  <li><strong>0.60ms Graph Hop:</strong> Memory pointers link Web ➔ Backend ➔ Role ➔ Database directly with no SQL table joins.</li>
+                  <li><strong>0.84ms Cut:</strong> <code>DELETE relationship</code> instantly revokes access before any data is stolen.</li>
+                  <li><strong>Zero Records Stolen:</strong> Autonomous containment verified in real time.</li>
+                </ul>
+              </div>
+              <div class="speed-divider-vs">VS</div>
+              <div class="speed-col-card speed-card-soc">
+                <div class="col-head">
+                  <span class="col-badge badge-red">TRADITIONAL SQL / HUMAN SOC</span>
+                  <div class="col-metric">4.2 hrs</div>
+                  <small>INDUSTRY MEAN TIME TO REMEDIATE (MTTR)</small>
+                </div>
+                <ul class="col-points">
+                  <li><strong>Siloed Databases:</strong> Web logs, IAM keys, and DB logs live in separate tables.</li>
+                  <li><strong>Slow Multi-Table Joins:</strong> Joining 4 disjoint tables causes massive query delay.</li>
+                  <li><strong>Manual Tickets:</strong> 4.2 hours of human triage gives hackers plenty of time to steal data.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <!-- Prominent Broken Pipeline Air-Gap Banner -->
+          <div class="pipeline-broken-alert-bar" id="pipeline-broken-alert-bar" style="display: none;">
+            <div class="alert-bar-left">
+              <span class="alert-hazard-glow">⚡</span>
+              <strong class="alert-title">PIPELINE SEVERED:</strong>
+              <span class="alert-desc">Connection between <code class="alert-code">Admin Key</code> and <code class="alert-code">Customer Database</code> was <strong>CUT</strong> in FalkorDB</span>
+            </div>
+            <div class="alert-bar-right">
+              <span class="alert-chip-latency">⏱️ 0.84ms GRAPH MUTATION</span>
+              <span class="alert-chip-safe">🛡️ ZERO ATTACK PATHS REMAINING</span>
+            </div>
+          </div>
+
+          <!-- Horizontal Stage Flow Deck -->
+          <div class="pipeline-flow-scroll">
+            <div class="pipeline-flow" id="pipeline-flow">
+              <!-- Stage 1 -->
+              <div class="pipeline-stage stage-breach" id="pipe-stage-1" onclick="selectNode('pod-ingress-7b4d')" role="button" tabindex="0">
+                <div class="stage-top">
+                  <span class="stage-num">01 / 04</span>
+                  <span class="stage-pill pill-danger" id="pipe-pill-1">🚨 1. HACKED</span>
+                </div>
+                <div class="stage-main">
+                  <div class="stage-avatar avatar-danger">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>
+                  </div>
+                  <div class="stage-meta">
+                    <span class="stage-category">STEP 1: HACKED WEBSITE</span>
+                    <strong class="stage-asset-name">Public Website</strong>
+                    <span class="stage-tier">pod-ingress-7b4d</span>
+                  </div>
+                </div>
+                <div class="stage-risk-card danger-card" id="pipe-card-1">
+                  <div class="risk-cve">Hacked Website</div>
+                  <div class="risk-desc">Public web entry point</div>
+                </div>
+                <div class="stage-cypher-preview">
+                  <span>CYPHER</span>
+                  <code>(p:Pod)-[:EXPOSES]->(v)</code>
+                </div>
+              </div>
+
+              <!-- Connector 1 -->
+              <div class="pipeline-connector" id="pipe-conn-1">
+                <span class="conn-edge-label">ROUTES TO</span>
+                <div class="conn-track">
+                  <span class="conn-pulse"></span>
+                  <svg class="conn-arrow-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+                </div>
+                <span class="conn-sub">Internal Network</span>
+              </div>
+
+              <!-- Stage 2 -->
+              <div class="pipeline-stage stage-lateral" id="pipe-stage-2" onclick="selectNode('pod-api-65c2')" role="button" tabindex="0">
+                <div class="stage-top">
+                  <span class="stage-num">02 / 04</span>
+                  <span class="stage-pill pill-warning" id="pipe-pill-2">⚠️ 2. PIVOT</span>
+                </div>
+                <div class="stage-main">
+                  <div class="stage-avatar avatar-warning">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>
+                  </div>
+                  <div class="stage-meta">
+                    <span class="stage-category">STEP 2: BACKEND SERVER</span>
+                    <strong class="stage-asset-name">Backend Server</strong>
+                    <span class="stage-tier">pod-api-65c2</span>
+                  </div>
+                </div>
+                <div class="stage-risk-card warning-card" id="pipe-card-2">
+                  <div class="risk-cve">Backend Server</div>
+                  <div class="risk-desc">Internal network pivot</div>
+                </div>
+                <div class="stage-cypher-preview">
+                  <span>CYPHER</span>
+                  <code>(p1:Pod)-[:ROUTES_TO]->(p2)</code>
+                </div>
+              </div>
+
+              <!-- Connector 2 -->
+              <div class="pipeline-connector" id="pipe-conn-2">
+                <span class="conn-edge-label">USES KEY</span>
+                <div class="conn-track">
+                  <span class="conn-pulse"></span>
+                  <svg class="conn-arrow-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+                </div>
+                <span class="conn-sub">Stolen Access</span>
+              </div>
+
+              <!-- Stage 3 -->
+              <div class="pipeline-stage stage-toxic" id="pipe-stage-3" onclick="selectNode('iam-prod-reader')" role="button" tabindex="0">
+                <div class="stage-top">
+                  <span class="stage-num">03 / 04</span>
+                  <span class="stage-pill pill-danger" id="pipe-pill-3">🔥 3. STOLEN KEY</span>
+                </div>
+                <div class="stage-main">
+                  <div class="stage-avatar avatar-danger">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21 2-2 2m-6 6 7 7-2 2-7-7m-3-1a5 5 0 1 1 7-7 5 5 0 0 1-7 7Z"/></svg>
+                  </div>
+                  <div class="stage-meta">
+                    <span class="stage-category">STEP 3: STOLEN ADMIN KEY</span>
+                    <strong class="stage-asset-name">Admin Access Key</strong>
+                    <span class="stage-tier">iam-prod-reader</span>
+                  </div>
+                </div>
+                <div class="stage-risk-card danger-card" id="pipe-card-3">
+                  <div class="risk-cve">Stolen Admin Key</div>
+                  <div class="risk-desc">Direct database credential</div>
+                </div>
+                <div class="stage-cypher-preview">
+                  <span>CYPHER</span>
+                  <code>(p)-[:ASSUMES_ROLE]->(r)</code>
+                </div>
+              </div>
+
+              <!-- Connector 3: CRITICAL CUT TARGET -->
+              <div class="pipeline-connector connector-critical" id="pipe-conn-3">
+                <div class="conn-active-elements" id="conn-active-elements">
+                  <span class="conn-edge-label" id="pipe-conn-3-label">UNLOCKS DATABASE</span>
+                  <div class="conn-track" id="pipe-conn-3-track">
+                    <span class="conn-pulse" id="pipe-conn-3-pulse"></span>
+                    <svg class="conn-arrow-icon" id="pipe-conn-3-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+                  </div>
+                  <span class="conn-sub" id="pipe-conn-3-sub">Danger: Active Hack Path</span>
+                </div>
+
+                <!-- DRAMATIC BROKEN PIPELINE VISUAL -->
+                <div class="pipeline-broken-visual" id="pipeline-broken-visual" style="display: none;">
+                  <div class="broken-laser-hazard">
+                    <span class="hazard-wire wire-left"></span>
+                    <div class="broken-laser-sign">
+                      <div class="hazard-banner">
+                        <span class="hazard-flash">⚡</span>
+                        <strong>CONNECTION CUT</strong>
+                        <span class="hazard-flash">⚡</span>
+                      </div>
+                      <div class="broken-sever-action">
+                        <span class="sever-icon-box">✂️</span>
+                        <span>TRUST EDGE SEVERED</span>
+                      </div>
+                      <div class="broken-engine-metric">
+                        <span>FALKORDB MUTATION: <b>0.84ms</b></span>
+                      </div>
+                    </div>
+                    <span class="hazard-wire wire-right"></span>
+                  </div>
+                  <div class="broken-airgap-tag">
+                    <span>🛡️ ZERO ATTACK PATHS REMAINING</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Stage 4 -->
+              <div class="pipeline-stage stage-target" id="pipe-stage-4" onclick="selectNode('rds-customer-prod')" role="button" tabindex="0">
+                <div class="stage-top">
+                  <span class="stage-num">04 / 04</span>
+                  <span class="stage-pill pill-danger" id="pipe-pill-4">💎 4. TARGET</span>
+                </div>
+                <div class="stage-main">
+                  <div class="stage-avatar avatar-jewel">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+                  </div>
+                  <div class="stage-meta">
+                    <span class="stage-category">STEP 4: CUSTOMER DATABASE</span>
+                    <strong class="stage-asset-name">Customer Database</strong>
+                    <span class="stage-tier">rds-customer-prod (Target)</span>
+                  </div>
+                </div>
+                <div class="stage-risk-card danger-card" id="pipe-card-4">
+                  <div class="risk-cve">Customer Database</div>
+                  <div class="risk-desc">2,400,000 customer records</div>
+                </div>
+                <div class="stage-cypher-preview">
+                  <span>CYPHER</span>
+                  <code>(r)-[:UNLOCKS_DATABASE]->(d)</code>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Interactive Live Cypher Execution Drawer -->
+          <div class="pipeline-terminal-bar">
+            <div class="cypher-bar-head">
+              <div class="cypher-bar-title">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+                <span>ACTIVE GRAPH QUERY (FALKORDB ENGINE)</span>
+              </div>
+              <div class="cypher-bar-metrics">
+                <span>TRAVERSAL: <b>0.60ms</b></span>
+                <span>SEVER LATENCY: <b>0.84ms</b></span>
+                <span>POST-SEVER REACHABLE PATHS: <b id="cypher-paths-count">0</b></span>
+              </div>
+            </div>
+            <div class="cypher-bar-code" id="cypher-active-code">
+              <code>MATCH path = (p:Pod {id:'pod-ingress-7b4d'})-[:ROUTES_TO]-&gt;(p2)-[:ASSUMES_ROLE]-&gt;(r)-[:UNLOCKS_DATABASE]-&gt;(d:Database) RETURN path</code>
+            </div>
+          </div>
+        </div>
+<div class="graph-canvas">
+          <div class="canvas-grid"></div>
+          <div class="zone-label zone-edge">EXTERNAL EDGE <span>UNTRUSTED</span></div>
+          <div class="zone-label zone-workload">COMPUTE LAYER <span>PRODUCTION</span></div>
+          <div class="zone-label zone-data">DATA PLANE <span>RESTRICTED</span></div>
+          <div class="graph-vignette"></div>
+
+          <!-- SVG Topology Graph -->
+          <svg class="topology-svg" id="topology-svg" viewBox="0 0 820 590" role="img" aria-label="Cloud asset attack path topology" preserveAspectRatio="xMidYMid meet">
+            <defs>
+              <marker id="arrow-dim" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+                <path d="M0 0 L8 4 L0 8" class="arrow-dim" />
+              </marker>
+              <marker id="arrow-threat" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto">
+                <path d="M0 0 L9 4.5 L0 9" class="arrow-threat" />
+              </marker>
+              <marker id="arrow-safe" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+                <path d="M0 0 L8 4 L0 8" class="arrow-safe" />
+              </marker>
+            </defs>
+            <g id="svg-edges-group"></g>
+            <g id="svg-nodes-group"></g>
+          </svg>
+
+          <div class="graph-legend">
+            <span><i class="legend-red"></i>COMPROMISED</span>
+            <span><i class="legend-cyan"></i>TRUST PATH</span>
+            <span><i class="legend-green"></i>SECURE</span>
+          </div>
+          <div class="graph-scale">TOPOLOGY: CLOUD / US-EAST-1 <span>·</span> UPDATED JUST NOW</div>
+        </div>
+
+        <div class="path-ribbon">
+          <div class="path-ribbon-title">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <span id="ribbon-title-text">PRIMARY ATTACK CHAIN</span>
+            <span class="chain-count" id="ribbon-count-text">3 EDGES · 4 HOPS</span>
+          </div>
+          <div class="chain-flow" id="chain-flow-container">
+            <!-- Dynamically populated -->
+          </div>
         </div>
       </section>
 
-      <!-- Right: Autonomous Agent Reasoning Feed -->
-      <aside class="agent-feed-section">
-        <div class="section-header">
-          <div class="section-title">
-            <span class="icon">🤖</span> AGENT THOUGHT TRACE & DECISION LOG
+      <!-- Right Rail: Copilot & Inspector -->
+      <aside class="right-rail">
+        <div class="copilot-head">
+          <div>
+            <span class="copilot-icon">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>
+            </span>
+            <div>
+              <strong>COMMAND COPILOT</strong>
+              <small><span class="status-led led-green"></span> AUTONOMOUS AGENT</small>
+            </div>
           </div>
-          <span class="agent-status-tag" id="agent-status">READY</span>
+          <button class="icon-action mobile-copilot-toggle" id="btn-mobile-chat">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          </button>
         </div>
 
-        <div class="feed-scroll" id="agent-feed">
-          <div class="feed-welcome-card">
-            <h4>Awaiting Incident Command Trigger</h4>
-            <p>Click <strong>"Autonomous Investigate & Remediate"</strong> to watch the agent:</p>
-            <ul>
-              <li>Traverse FalkorDB multi-hop connections</li>
-              <li>Expose toxic IAM combinations</li>
-              <li>Calculate sensitive asset blast radius</li>
-              <li>Autonomously sever malicious graph edges</li>
-            </ul>
+        <div class="right-tabs">
+          <button id="tab-log-btn" class="tab-active">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            ACTION LOG<span class="tab-count" id="action-log-count">04</span>
+          </button>
+          <button id="tab-inspector-btn" class="">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="22" y1="12" x2="18" y2="12"/><line x1="6" y1="12" x2="2" y2="12"/><line x1="12" y1="6" x2="12" y2="2"/><line x1="12" y1="22" x2="12" y2="18"/></svg>
+            INSPECTOR
+          </button>
+        </div>
+
+        <div class="right-content">
+          <!-- Action Log Panel -->
+          <div class="timeline-wrap" id="panel-log">
+            <div class="timeline-status" id="timeline-status-badge">
+              <span class="status-led led-red" id="timeline-led"></span>
+              <span id="timeline-status-text">AWAITING RESPONSE</span>
+              <span class="mono" id="timeline-latency-num">LIVE</span>
+            </div>
+            <div id="timeline-steps-container">
+              <!-- Dynamically populated trace steps -->
+            </div>
+            <div class="trace-footer">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+              <span>AGENT REASONING TRACE</span>
+              <span class="mono" id="trace-total-latency">LATENCY 63ms</span>
+            </div>
+          </div>
+
+          <!-- Inspector Panel -->
+          <div class="inspector-pane" id="panel-inspector" style="display: none;">
+            <div class="inspector-asset">
+              <span class="asset-icon" id="insp-icon">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>
+              </span>
+              <div>
+                <small id="insp-type-label">POD</small>
+                <strong id="insp-name-label">pod-ingress-7b4d</strong>
+              </div>
+            </div>
+            <div class="inspector-risk">
+              <span>RISK STATE</span>
+              <strong id="insp-risk-status" class="health-text-compromised">
+                <span class="asset-health health-compromised"></span>
+                COMPROMISED
+              </strong>
+            </div>
+            <div class="property-list" id="insp-property-list">
+              <!-- Dynamically filled properties -->
+            </div>
+            <div class="inspector-connections">
+              <div class="mini-heading">
+                CONNECTED RELATIONSHIPS
+                <span id="insp-conn-count">3</span>
+              </div>
+              <div id="insp-relations-list">
+                <!-- Dynamically filled relations -->
+              </div>
+            </div>
           </div>
         </div>
 
-        <!-- Node Inspector Drawer -->
-        <div class="node-inspector" id="node-inspector">
-          <div class="inspector-header">
-            <span class="inspector-title">SELECTED NODE INSPECTOR</span>
-            <span class="inspector-badge" id="insp-type">None</span>
+        <!-- AI SecOps Terminal -->
+        <div class="assistant-terminal" id="assistant-terminal">
+          <div class="terminal-title">
+            <span>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+              AI SECOPS TERMINAL
+            </span>
+            <span class="terminal-live"><i></i> READY</span>
           </div>
-          <div class="inspector-content" id="insp-content">
-            <p class="placeholder-text">Click any node in the topology graph to inspect its properties and relationships.</p>
+          <div class="chat-messages" id="chat-messages" aria-live="polite">
+            <div class="chat-message chat-agent">
+              <span>AGENT</span>
+              <p>Incident copilot online. Ask about attack paths, affected assets, or containment.</p>
+            </div>
+          </div>
+          <form class="chat-form" id="chat-form">
+            <input type="text" id="chat-input" placeholder="Ask about this incident…" autocomplete="off" />
+            <button class="send-button" type="submit" aria-label="Send message">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            </button>
+          </form>
+          <div class="terminal-hint" id="terminal-hint">
+            <span id="terminal-context-asset">pod-ingress-7b4d</span> · CONTEXT ATTACHED
           </div>
         </div>
       </aside>
-    </main>
+    </div>
 
-    <!-- Footer Status -->
-    <footer class="hud-footer">
-      <span>Track 01: Agents That Act on Connected Data | Team SUVI (Baji Baddela)</span>
-      <span>Engine: FalkorDB Low-Latency Graph Database (Cypher Native)</span>
+    <!-- Bottom Status Bar -->
+    <footer class="bottom-status">
+      <span><span class="status-led led-green"></span> ALL SYSTEMS OPERATIONAL</span>
+      <span class="bottom-center">AEGISGRAPH <i>·</i> AUTONOMOUS INCIDENT COMMANDER</span>
+      <span>
+        SECURE CHANNEL
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="16" r="1"/><rect x="3" y="10" width="18" height="12" rx="2"/><path d="M7 10V7a5 5 0 0 1 10 0v3"/></svg>
+      </span>
     </footer>
-  </div>
+  </main>
 
-  <script src="/static/app.js?v=2"></script>
+  <script src="/static/app.js?v=pipeline-broken-v4"></script>
 </body>
 </html>

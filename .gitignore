@@ -1,4 +1,9 @@
 venv/
 __pycache__/
 *.pyc
+.env
 .DS_Store
+node_modules/
+dist/
+lovable_app/node_modules/
+lovable_app/dist/
