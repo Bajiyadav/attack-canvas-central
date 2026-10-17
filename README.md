@@ -1,5 +1,6 @@
 # 🛡️ AegisGraph: Autonomous Incident Commander & Blast-Radius Agent
 
+> **Live Interactive Demo:** [https://aegisgraph-lemon.vercel.app](https://aegisgraph-lemon.vercel.app)  
 > **Hackathon Submission:** [Graph Hacks: Context for AI Agents](https://www.wemakedevs.org/hackathons/falkordb) (WeMakeDevs & FalkorDB)  
 > **Track 01:** Agents That Act on Connected Data  
 > **Side Prize Submission:** Best Blog Post (AirPods 5) — See [`BLOG_POST.md`](./BLOG_POST.md)  
