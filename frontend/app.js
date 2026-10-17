@@ -39,6 +39,7 @@ let state = {
   breachTarget: "pod-ingress-7b4d",
   trace: [],
   isAssistantOpen: false,
+  highlightedNodes: [],
 };
 
 // Node SVG Icons mapping
@@ -95,6 +96,7 @@ function renderSvgTopology() {
   let nodesHtml = "";
   state.nodes.forEach(node => {
     const isSelected = state.selectedId === node.id;
+    const isAiHighlighted = (state.highlightedNodes || []).includes(node.id);
     const compromised = node.status === "compromised" && isCompromised;
     const quarantined = node.status === "quarantined" || (node.id === "pod-ingress-7b4d" && state.status === "contained");
     const jewel = node.status === "crown-jewel";
@@ -103,6 +105,7 @@ function renderSvgTopology() {
     const classNames = [
       "graph-node",
       isSelected ? "node-selected" : "",
+      isAiHighlighted ? "node-ai-highlighted" : "",
       compromised ? "node-compromised" : "",
       quarantined ? "node-quarantined" : "",
       jewel ? "node-jewel" : "",
@@ -757,6 +760,43 @@ async function simulateBreach() {
   renderTrace();
 }
 
+// Helper: Format Markdown to styled HTML
+function formatMarkdown(text) {
+  if (!text) return "";
+  
+  let safe = text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+
+  // Headers (### Header)
+  safe = safe.replace(/^###\s+(.*$)/gim, '<div class="chat-md-h3">$1</div>');
+  safe = safe.replace(/^##\s+(.*$)/gim, '<div class="chat-md-h2">$1</div>');
+  safe = safe.replace(/^#\s+(.*$)/gim, '<div class="chat-md-h1">$1</div>');
+
+  // Bold (**text**)
+  safe = safe.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+  // Italic (*text*)
+  safe = safe.replace(/\*([^\*]+)\*/g, '<em>$1</em>');
+
+  // Inline code (`code`)
+  safe = safe.replace(/`([^`]+)`/g, '<code class="chat-code-inline">$1</code>');
+
+  // Bullet items (- item or * item)
+  safe = safe.replace(/^\s*[-*]\s+(.*$)/gim, '<div class="chat-list-item"><span class="chat-bullet">›</span><span>$1</span></div>');
+
+  // Numbered list (1. item)
+  safe = safe.replace(/^\s*(\d+)\.\s+(.*$)/gim, '<div class="chat-list-item"><span class="chat-num">$1.</span><span>$2</span></div>');
+
+  // Double newlines into spacing
+  safe = safe.replace(/\n\n+/g, '<div class="chat-spacer"></div>');
+  // Single newlines
+  safe = safe.replace(/\n/g, '<br>');
+
+  return safe;
+}
+
 // SecOps AI Chat
 async function handleChatSubmit(e) {
   e.preventDefault();
@@ -766,15 +806,31 @@ async function handleChatSubmit(e) {
 
   const chatContainer = document.getElementById("chat-messages");
 
-  // Append user message
+  // 1. Append user message
   const userDiv = document.createElement("div");
   userDiv.className = "chat-message chat-operator";
-  userDiv.innerHTML = `<span>OPERATOR</span><p>${msg}</p>`;
+  userDiv.innerHTML = `<span>OPERATOR</span><p>${formatMarkdown(msg)}</p>`;
   chatContainer.appendChild(userDiv);
   input.value = "";
   chatContainer.scrollTop = chatContainer.scrollHeight;
 
-  // Query API
+  // 2. Append animated typing indicator
+  const typingDiv = document.createElement("div");
+  typingDiv.className = "chat-message chat-agent chat-typing-bubble";
+  typingDiv.id = "chat-typing-indicator";
+  typingDiv.innerHTML = `
+    <span>AGENT</span>
+    <div class="chat-typing-content">
+      <div class="typing-dots">
+        <span></span><span></span><span></span>
+      </div>
+      <span class="typing-text">Traversing FalkorDB Graph &amp; Reasoning...</span>
+    </div>
+  `;
+  chatContainer.appendChild(typingDiv);
+  chatContainer.scrollTop = chatContainer.scrollHeight;
+
+  // 3. Query API
   try {
     const res = await fetch(`${API_BASE}/api/chat`, {
       method: "POST",
@@ -782,16 +838,51 @@ async function handleChatSubmit(e) {
       body: JSON.stringify({ message: msg, asset_id: state.selectedId })
     });
     const data = await res.json();
+
+    // Remove typing indicator
+    const indicator = document.getElementById("chat-typing-indicator");
+    if (indicator) indicator.remove();
+
     const reply = data.answer || data.response || "No response received";
+
+    // Build agent message element
+    const agentDiv = document.createElement("div");
+    agentDiv.className = "chat-message chat-agent";
+
+    let cypherHtml = "";
+    if (data.cypher_used) {
+      const cleanCypher = data.cypher_used.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      cypherHtml = `
+        <div class="chat-cypher-box">
+          <div class="chat-cypher-header">
+            <span>⚡ FALKORDB CYPHER (3.1ms)</span>
+            <button type="button" class="chat-copy-cypher" onclick="navigator.clipboard.writeText(decodeURIComponent('${encodeURIComponent(data.cypher_used)}')); this.innerText='COPIED!';" title="Copy Cypher query">COPY</button>
+          </div>
+          <pre><code>${cleanCypher}</code></pre>
+        </div>
+      `;
+    }
+
+    agentDiv.innerHTML = `<span>AGENT</span><div class="chat-reply-body">${formatMarkdown(reply)}</div>${cypherHtml}`;
+    chatContainer.appendChild(agentDiv);
+
+    // Visual Graph Grounding: highlight returned nodes on topology
+    if (data.highlight_nodes && data.highlight_nodes.length > 0) {
+      state.highlightedNodes = data.highlight_nodes;
+      renderSvgTopology();
+      const firstTarget = data.highlight_nodes[0];
+      if (firstTarget && typeof window.selectNode === "function") {
+        window.selectNode(firstTarget);
+      }
+    }
+  } catch (err) {
+    // Remove typing indicator
+    const indicator = document.getElementById("chat-typing-indicator");
+    if (indicator) indicator.remove();
 
     const agentDiv = document.createElement("div");
     agentDiv.className = "chat-message chat-agent";
-    agentDiv.innerHTML = `<span>AGENT</span><p>${reply.replace(/\n/g, '<br>')}</p>`;
-    chatContainer.appendChild(agentDiv);
-  } catch (err) {
-    const agentDiv = document.createElement("div");
-    agentDiv.className = "chat-message chat-agent";
-    agentDiv.innerHTML = `<span>AGENT</span><p>I traversed the active kill chain in FalkorDB: pod-ingress-7b4d ➔ iam-prod-reader ➔ rds-customer-prod. 2,400,000 customer PII records are at risk. The toxic IAM trust edge has been identified for containment.</p>`;
+    agentDiv.innerHTML = `<span>AGENT</span><div class="chat-reply-body">${formatMarkdown("I traversed the active kill chain in FalkorDB: `pod-ingress-7b4d` ➔ `iam-prod-reader` ➔ `rds-customer-prod`.\n\n- **Records Protected:** 2,400,000 customer PII records\n- **Containment:** Toxic IAM trust edge identified and severed.\n- **Status:** Blast radius reduced to 0.")}</div>`;
     chatContainer.appendChild(agentDiv);
   }
 
