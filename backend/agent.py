@@ -436,7 +436,7 @@ class AegisAgent:
                 "- **1,200+ Engineering Hours Saved Annually:** SecOps and SRE teams reclaim over 30 hours per week for proactive security engineering rather than firefighting."
             )
 
-        elif any(w in prompt_lower for w in ["sever", "cut", "contain", "fix", "remediat", "broken", "pipeline", "how does", "how to"]):
+        elif any(w in prompt_lower for w in ["sever", "cut", "containment", "fix", "remediat", "broken", "pipeline", "how does", "how to"]):
             cypher = "MATCH (r:IAMRole {id: 'iam-prod-reader'})-[rel:ACCESSES_DB]->(d:Database {id: 'rds-customer-prod'}) DELETE rel"
             highlight_nodes = ["pod-ingress-7b4d", "iam-prod-reader", "rds-customer-prod"]
             answer = (

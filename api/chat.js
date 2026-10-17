@@ -28,7 +28,7 @@ export default function handler(req, res) {
 - **Financial & Asset Protection:** Instantly shields **2,400,000 customer PII records** in \`rds-customer-prod\`, preventing an estimated **$2,400,000 in regulatory breach penalties**.
 - **1,200+ Engineering Hours Saved Annually:** SecOps and SRE teams reclaim over 30 hours per week for proactive security engineering rather than firefighting.`;
 
-  } else if (["sever", "cut", "contain", "fix", "remediat", "broken", "pipeline", "how does", "how to"].some(w => message.includes(w))) {
+  } else if (["sever", "cut", "containment", "fix", "remediat", "broken", "pipeline", "how does", "how to"].some(w => message.includes(w))) {
     cypher = "MATCH (r:IAMRole {id: 'iam-prod-reader'})-[rel:ACCESSES_DB]->(d:Database {id: 'rds-customer-prod'}) DELETE rel";
     highlight_nodes = ["pod-ingress-7b4d", "iam-prod-reader", "rds-customer-prod"];
     answer = `### ✂️ Autonomous 4-Step Containment Pipeline
