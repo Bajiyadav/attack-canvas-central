@@ -590,40 +590,6 @@
             </div>
           </div>
         </div>
-
-        <!-- AI SecOps Terminal -->
-        <div class="assistant-terminal" id="assistant-terminal">
-          <div class="terminal-title">
-            <span>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
-              AI SECOPS TERMINAL
-            </span>
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <span class="terminal-live"><i></i> READY</span>
-              <button type="button" class="terminal-close-btn" id="btn-close-terminal" title="Close AI Terminal">&times;</button>
-            </div>
-          </div>
-          <div class="chat-messages" id="chat-messages" aria-live="polite">
-            <div class="chat-message chat-agent">
-              <span>AGENT</span>
-              <p>Incident copilot online. Ask about attack paths, affected assets, or containment.</p>
-            </div>
-          </div>
-          <div class="chat-suggestions">
-            <button type="button" class="suggestion-chip" onclick="window.sendPrompt('What is the blast radius?')">🎯 Blast Radius</button>
-            <button type="button" class="suggestion-chip" onclick="window.sendPrompt('Which edge was severed?')">✂️ Severed Edge</button>
-            <button type="button" class="suggestion-chip" onclick="window.sendPrompt('Why is FalkorDB 240,000x faster?')">⚡ Speed Advantage</button>
-          </div>
-          <form class="chat-form" id="chat-form">
-            <input type="text" id="chat-input" placeholder="Ask about this incident…" autocomplete="off" />
-            <button class="send-button" type="submit" aria-label="Send message">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-            </button>
-          </form>
-          <div class="terminal-hint" id="terminal-hint">
-            <span id="terminal-context-asset">pod-ingress-7b4d</span> · CONTEXT ATTACHED
-          </div>
-        </div>
       </aside>
     </div>
 
@@ -641,6 +607,40 @@
       <span class="copilot-bubble-icon">🤖</span>
       <span class="copilot-bubble-text">AI Copilot</span>
     </button>
+
+    <!-- AI SecOps Terminal Drawer (Top-Level Overlay) -->
+    <div class="assistant-terminal" id="assistant-terminal" style="display: none;">
+      <div class="terminal-title">
+        <span>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+          AI SECOPS TERMINAL
+        </span>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span class="terminal-live"><i></i> READY</span>
+          <button type="button" class="terminal-close-btn" id="btn-close-terminal" onclick="window.toggleAssistant(false)" title="Close AI Terminal">&times;</button>
+        </div>
+      </div>
+      <div class="chat-messages" id="chat-messages" aria-live="polite">
+        <div class="chat-message chat-agent">
+          <span>AGENT</span>
+          <p>Incident copilot online. Ask about attack paths, affected assets, or containment.</p>
+        </div>
+      </div>
+      <div class="chat-suggestions">
+        <button type="button" class="suggestion-chip" onclick="window.sendPrompt('What is the blast radius?')">🎯 Blast Radius</button>
+        <button type="button" class="suggestion-chip" onclick="window.sendPrompt('Which edge was severed?')">✂️ Severed Edge</button>
+        <button type="button" class="suggestion-chip" onclick="window.sendPrompt('Why is FalkorDB 240,000x faster?')">⚡ Speed Advantage</button>
+      </div>
+      <form class="chat-form" id="chat-form">
+        <input type="text" id="chat-input" placeholder="Ask about this incident…" autocomplete="off" />
+        <button class="send-button" type="submit" aria-label="Send message">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+      </form>
+      <div class="terminal-hint" id="terminal-hint">
+        <span id="terminal-context-asset">pod-ingress-7b4d</span> · CONTEXT ATTACHED
+      </div>
+    </div>
 
     <!-- Cloud Infrastructure Remediation Modal -->
     <div class="universal-modal-backdrop" id="cloud-fix-modal">

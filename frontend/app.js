@@ -858,15 +858,27 @@ document.addEventListener("DOMContentLoaded", () => {
   if (chatForm) chatForm.addEventListener("submit", handleChatSubmit);
 
   // Toggle Assistant
-  const btnToggle = document.getElementById("btn-toggle-assistant");
-  const btnMobileChat = document.getElementById("btn-mobile-chat");
-  const btnCloseTerm = document.getElementById("btn-close-terminal");
-  const terminal = document.getElementById("assistant-terminal");
-
   window.toggleAssistant = function(forceState) {
+    const terminal = document.getElementById("assistant-terminal");
     if (!terminal) return;
-    state.isAssistantOpen = forceState !== undefined ? forceState : !state.isAssistantOpen;
-    terminal.classList.toggle("assistant-expanded", state.isAssistantOpen);
+
+    if (typeof forceState === "boolean") {
+      state.isAssistantOpen = forceState;
+    } else {
+      state.isAssistantOpen = !state.isAssistantOpen;
+    }
+
+    if (state.isAssistantOpen) {
+      terminal.style.display = "flex";
+      terminal.classList.add("assistant-expanded");
+      setTimeout(() => {
+        const input = document.getElementById("chat-input");
+        if (input) input.focus();
+      }, 100);
+    } else {
+      terminal.style.display = "none";
+      terminal.classList.remove("assistant-expanded");
+    }
   };
 
   window.sendPrompt = function(text) {
@@ -879,9 +891,6 @@ document.addEventListener("DOMContentLoaded", () => {
       form.dispatchEvent(new Event("submit", { cancelable: true }));
     }
   };
-
-  if (btnToggle) btnToggle.addEventListener("click", () => window.toggleAssistant());
-  if (btnMobileChat) btnMobileChat.addEventListener("click", () => window.toggleAssistant());
   // Modal handlers
   window.toggleCloudFixModal = function(forceState) {
     const modal = document.getElementById("cloud-fix-modal");

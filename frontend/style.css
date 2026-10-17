@@ -1260,9 +1260,10 @@ button { color: inherit; }
 }
 
 .assistant-terminal.assistant-expanded {
-  transform: translateY(0) scale(1);
-  opacity: 1;
-  pointer-events: auto;
+  transform: translateY(0) scale(1) !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  display: flex !important;
 }
 
 .terminal-title {
