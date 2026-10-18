@@ -170,6 +170,7 @@ FalkorDB gave our agent the speed and expressive power to act on connected data 
 ---
 
 ### 🔗 Project Links
-* **GitHub Repository:** [github.com/bajibaddela/aegis-graph](https://github.com/bajibaddela/aegis-graph)
+* **Live Interactive Demo:** [https://aegisgraph-lemon.vercel.app](https://aegisgraph-lemon.vercel.app)
+* **GitHub Repository:** [https://github.com/Bajiyadav/attack-canvas-central](https://github.com/Bajiyadav/attack-canvas-central)
 * **Hackathon:** [Graph Hacks by WeMakeDevs & FalkorDB](https://www.wemakedevs.org/hackathons/falkordb)
 * **Graph Engine:** [FalkorDB](https://www.falkordb.com/)
