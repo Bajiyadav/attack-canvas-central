@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Why We Replaced Vector RAG with FalkorDB | AegisGraph Blog</title>
+  <meta name="description" content="Why Vector RAG fails for cloud incident response and how FalkorDB enables autonomous multi-hop kill-chain remediation in sub-milliseconds.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b0f19;
+      --card-bg: rgba(18, 24, 38, 0.85);
+      --border: rgba(255, 255, 255, 0.1);
+      --accent: #00f2fe;
+      --accent-alt: #4facfe;
+      --danger: #ff416c;
+      --success: #00f2fe;
+      --text: #e2e8f0;
+      --text-muted: #94a3b8;
+      --code-bg: #060911;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', -apple-system, sans-serif;
+      line-height: 1.75;
+      padding: 0 1rem;
+      background-image: radial-gradient(circle at 50% 0%, rgba(79, 172, 254, 0.12) 0%, transparent 60%);
+      min-height: 100vh;
+    }
+    .header-nav {
+      max-width: 860px;
+      margin: 1.5rem auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem 1.25rem;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      backdrop-filter: blur(12px);
+    }
+    .brand {
+      font-weight: 700;
+      font-size: 1.1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: #fff;
+      text-decoration: none;
+    }
+    .brand span {
+      background: linear-gradient(135deg, var(--accent), var(--accent-alt));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .nav-links a {
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-left: 1rem;
+      padding: 0.4rem 0.8rem;
+      border-radius: 6px;
+      border: 1px solid rgba(0, 242, 254, 0.25);
+      transition: all 0.2s;
+    }
+    .nav-links a:hover {
+      background: rgba(0, 242, 254, 0.15);
+      border-color: var(--accent);
+    }
+    article {
+      max-width: 860px;
+      margin: 2rem auto 5rem auto;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 3rem 2.5rem;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+      backdrop-filter: blur(12px);
+    }
+    h1 {
+      font-size: 2.3rem;
+      line-height: 1.25;
+      margin-bottom: 1rem;
+      color: #fff;
+      font-weight: 800;
+    }
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-bottom: 2rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .badge {
+      display: inline-block;
+      padding: 0.2rem 0.6rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      background: rgba(0, 242, 254, 0.15);
+      color: var(--accent);
+      border: 1px solid rgba(0, 242, 254, 0.3);
+    }
+    h2 {
+      font-size: 1.5rem;
+      color: #fff;
+      margin: 2.5rem 0 1rem 0;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    h3 {
+      font-size: 1.2rem;
+      color: var(--accent);
+      margin: 1.75rem 0 0.75rem 0;
+      font-weight: 600;
+    }
+    p { margin-bottom: 1.25rem; font-size: 1.05rem; }
+    blockquote {
+      border-left: 4px solid var(--accent);
+      padding: 0.75rem 1.25rem;
+      margin: 1.5rem 0;
+      background: rgba(0, 242, 254, 0.05);
+      border-radius: 0 8px 8px 0;
+      font-style: italic;
+      color: #cbd5e1;
+    }
+    code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.9em;
+      background: var(--code-bg);
+      padding: 0.2rem 0.4rem;
+      border-radius: 4px;
+      color: #38bdf8;
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+    pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.25rem;
+      overflow-x: auto;
+      margin: 1.5rem 0;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.9rem;
+      color: #f1f5f9;
+      line-height: 1.6;
+    }
+    pre code { background: none; padding: 0; border: none; color: inherit; }
+    ol, ul { margin: 1rem 0 1.5rem 1.5rem; }
+    li { margin-bottom: 0.5rem; font-size: 1.05rem; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.5rem 0;
+      font-size: 0.95rem;
+    }
+    th, td {
+      padding: 0.75rem 1rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    th {
+      background: rgba(255, 255, 255, 0.04);
+      color: #fff;
+      font-weight: 600;
+    }
+    tr:hover td { background: rgba(255, 255, 255, 0.02); }
+    .footer-box {
+      margin-top: 3rem;
+      padding: 1.5rem;
+      background: rgba(0, 242, 254, 0.05);
+      border: 1px solid rgba(0, 242, 254, 0.2);
+      border-radius: 12px;
+      text-align: center;
+    }
+    .cta-btn {
+      display: inline-block;
+      margin-top: 1rem;
+      padding: 0.75rem 1.5rem;
+      background: linear-gradient(135deg, #00f2fe, #4facfe);
+      color: #0b0f19;
+      font-weight: 700;
+      text-decoration: none;
+      border-radius: 8px;
+      box-shadow: 0 4px 15px rgba(0, 242, 254, 0.3);
+      transition: transform 0.2s;
+    }
+    .cta-btn:hover { transform: translateY(-2px); }
+  </style>
+</head>
+<body>
+
+  <nav class="header-nav">
+    <a href="/" class="brand">
+      🛡️ <span>AegisGraph</span>
+    </a>
+    <div class="nav-links">
+      <a href="/">Launch Cyber HUD</a>
+      <a href="https://github.com/Bajiyadav/attack-canvas-central" target="_blank" rel="noopener">GitHub</a>
+    </div>
+  </nav>
+
+  <article>
+    <div class="meta">
+      <span class="badge">Graph Hacks 2026</span>
+      <span class="badge">Track 01: Agents That Act on Connected Data</span>
+      <span>By <strong>Baji Baddela</strong> (Team SUVI)</span>
+      <span>• 5 min read</span>
+    </div>
+
+    <h1>Why We Replaced Vector RAG with FalkorDB to Build an Autonomous Cloud Incident Commander</h1>
+
+    <p>When developers think about giving AI agents context, their default reaction is almost always: <em>"Let's chunk our documents and embed them into a vector database!"</em></p>
+    
+    <p>In cybersecurity and cloud infrastructure, <strong>Vector RAG fails completely</strong>.</p>
+
+    <pre><code>[CRITICAL ALERT] Pod 'pod-ingress-7b4d' compromised via CVE-2026-9912 (CVSS 9.8 RCE)</code></pre>
+
+    <p>A vector database can retrieve the CVE description or the pod's deployment YAML. But it cannot answer the single, life-or-death question every SecOps team needs to know within seconds:</p>
+    
+    <blockquote>"Can the attacker pivot from this pod to our customer PII database?"</blockquote>
+
+    <p>That answer does not exist in any document or vector embedding. It exists in the <strong>connected relationships</strong> between disparate cloud assets:</p>
+    <ol>
+      <li>The Pod assumes an overprivileged IAM Role.</li>
+      <li>The IAM Role grants read access to an unencrypted internal S3 backup bucket.</li>
+      <li>The S3 bucket contains a leaked database snapshot file (<code>env.backup.json</code>).</li>
+      <li>That file exposes a master superuser secret (<code>RDS_POSTGRES_CROWN_CREDENTIAL</code>).</li>
+      <li>The secret unlocks your crown jewel: <code>Customer-Vault-Postgres</code>, containing <strong>2.4 million customer PII records</strong>.</li>
+    </ol>
+
+    <p>This is a <strong>4-hop kill-chain</strong>. To discover and neutralize it in real time before data exfiltration occurs, an AI agent needs a graph context layer. Enter <strong>FalkorDB</strong>.</p>
+
+    <h2>🛡️ What We Built: AegisGraph</h2>
+    <p>We built <strong>AegisGraph</strong>: an Autonomous Cloud Incident Commander powered by FalkorDB as its low-latency context layer, paired with Google Gemini for explainable natural-language SecOps intelligence.</p>
+
+    <pre><code>┌───────────────────────────────────────────────────────────┐
+│        AegisGraph Cyber HUD / Lovable UI (Canvas)         │
+└─────────────────────────────┬─────────────────────────────┘
+                              ▼
+┌───────────────────────────────────────────────────────────┐
+│          AegisGraph Agent Core (Python FastAPI)           │
+│   - Multi-Hop Graph Reasoner  - Gemini SecOps Copilot     │
+└──────────────┬─────────────────────────────┬──────────────┘
+               ▼                             ▼
+┌─────────────────────────────┐ ┌───────────────────────────┐
+│   FalkorDB Engine (Graph)   │ │  Cloud Action (Contain)   │
+│   - Sub-2ms Cypher Queries  │ │  - Revoke Toxic IAM Links │
+│   - Topology Mutations      │ │  - Quarantine Workloads   │
+└─────────────────────────────┘ └───────────────────────────┘</code></pre>
+
+    <h2>🔬 How It Works: Step-by-Step</h2>
+
+    <h3>1. Modeling Cloud Infrastructure as a Graph</h3>
+    <p>We modeled 20 cloud assets (Gateways, Microservices, Pods, CVEs, IAM Roles, S3 Buckets, Secrets, and RDS clusters) and 17 directional relationships including <code>[:ROUTES_TO]</code>, <code>[:ASSUMES_ROLE]</code>, <code>[:CAN_READ]</code>, <code>[:EXPOSES_SECRET]</code>, and <code>[:UNLOCKS_DATABASE]</code>.</p>
+
+    <h3>2. Multi-Hop Kill-Chain Discovery (&lt; 2ms)</h3>
+    <p>When the ingress pod is compromised, the agent executes a multi-hop path traversal in FalkorDB:</p>
+
+    <pre><code>MATCH path = (p:Pod {id: 'pod-ingress-7b4d'})-[*1..5]->(target:Database {contains_pii: true})
+RETURN [n in nodes(path) | n.name] AS attack_chain, 
+       length(path) AS total_hops,
+       target.records_count AS records_exposed</code></pre>
+
+    <p>In less than <strong>2 milliseconds</strong>, FalkorDB uncovers the exact path to <code>Customer-Vault-Postgres</code> and flags <strong>2,400,000 sensitive records</strong> in the direct line of fire.</p>
+
+    <h3>3. Blast Radius Calculation</h3>
+    <p>Next, the agent aggregates all reachable sensitive assets within 4 hops:</p>
+
+    <pre><code>MATCH (p:Pod {id: 'pod-ingress-7b4d'})-[*1..4]->(sensitive)
+WHERE (sensitive:Database) OR (sensitive:Secret) OR (sensitive:S3Bucket)
+RETURN DISTINCT labels(sensitive)[0] AS type, sensitive.name AS name, sensitive.id AS id</code></pre>
+
+    <p>The agent calculates an aggregate Threat Score of <strong>9.8 / 10 (CRITICAL)</strong>.</p>
+
+    <h3>4. Autonomous Containment (Graph Action)</h3>
+    <p>Instead of waiting 45 minutes for a human on-call engineer, the agent takes immediate surgical action by deleting the toxic <code>[:ASSUMES_ROLE]</code> edge in FalkorDB:</p>
+
+    <pre><code>MATCH (p:Pod {id: 'pod-ingress-7b4d'})-[r:ASSUMES_ROLE]->(role:IAMRole {id: 'role-toxic-admin'})
+DELETE r
+RETURN count(r) AS revoked_links</code></pre>
+
+    <h3>5. Post-Remediation Verification</h3>
+    <p>The agent re-traverses the graph to verify zero-trust containment. Result: <strong>0 attack paths remain</strong>. The threat score drops from <strong>9.8 (CRITICAL)</strong> to <strong>0.0 (SECURE)</strong> in <strong>63.8 milliseconds</strong> total execution time!</p>
+
+    <h2>⚡ Real-World FalkorDB Benchmarks</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Operation</th>
+          <th>Mean Latency</th>
+          <th>p95 Latency</th>
+          <th>Throughput</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>1-Hop Neighbor Lookup</strong></td>
+          <td><strong>0.45 ms</strong></td>
+          <td>0.83 ms</td>
+          <td>2,217 QPS</td>
+        </tr>
+        <tr>
+          <td><strong>2-Hop IAM Traversal</strong></td>
+          <td><strong>0.45 ms</strong></td>
+          <td>0.57 ms</td>
+          <td>2,231 QPS</td>
+        </tr>
+        <tr>
+          <td><strong>4-Hop Full Kill-Chain Traversal</strong></td>
+          <td><strong>0.60 ms</strong></td>
+          <td>1.31 ms</td>
+          <td>1,674 QPS</td>
+        </tr>
+        <tr>
+          <td><strong>Shortest Path Algorithm</strong></td>
+          <td><strong>0.66 ms</strong></td>
+          <td>1.41 ms</td>
+          <td>1,517 QPS</td>
+        </tr>
+        <tr>
+          <td><strong>Autonomous Edge Severing</strong></td>
+          <td><strong>0.84 ms</strong></td>
+          <td>1.83 ms</td>
+          <td>1,185 QPS</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>💡 Key Architectural Learnings</h2>
+    <ul>
+      <li><strong>Graphs Turn O(N^k) Nightmares into O(1) Traversals:</strong> Recursive relational SQL chokes under load. FalkorDB matrix operations traverse paths in under 1 millisecond.</li>
+      <li><strong>Agent Tools Should Be Graph Queries, Not Raw Dumps:</strong> Handing an LLM massive JSON dumps creates hallucinations. Atomic Cypher tools give high-precision context.</li>
+      <li><strong>Containment Is an Act on Connected Data:</strong> Instead of shutting down servers, surgical graph severing cuts the toxic IAM bridge while keeping normal customer traffic flowing.</li>
+      <li><strong>Speed Is Security:</strong> Human MTTR takes 45 minutes; FalkorDB executes detection, path analysis, containment, and verification in 63 milliseconds.</li>
+    </ul>
+
+    <div class="footer-box">
+      <h3>Experience AegisGraph in Action</h3>
+      <p>Explore the live interactive Cyber HUD, simulate breaches, and test the Gemini SecOps AI Copilot.</p>
+      <a href="/" class="cta-btn">Launch Live Demo</a>
+    </div>
+  </article>
+
+</body>
+</html>

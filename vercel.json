@@ -2,6 +2,8 @@
   "version": 2,
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/$1" },
+    { "source": "/blog", "destination": "/frontend/blog.html" },
+    { "source": "/blog.html", "destination": "/frontend/blog.html" },
     { "source": "/static/(.*)", "destination": "/frontend/$1" },
     { "source": "/", "destination": "/frontend/" }
   ]
