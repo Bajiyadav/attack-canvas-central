@@ -7,3 +7,5 @@ node_modules/
 dist/
 lovable_app/node_modules/
 lovable_app/dist/
+.vercel
+paypal-ai-agent
